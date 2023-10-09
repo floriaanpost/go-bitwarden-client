@@ -57,3 +57,4 @@ func main() {
 
 # To do
 - [ ] Support windows when using `New()`. It does support `NewFromURL()`
+- [ ] Improve go docs
