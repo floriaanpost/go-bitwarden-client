@@ -111,6 +111,7 @@ type Item struct {
 }
 
 type BitwardenServer struct {
+	url    string
 	cmd    *exec.Cmd
 	client client
 }
@@ -123,11 +124,15 @@ func New() *BitwardenServer {
 	cmd := exec.Command("bash", "-c", "bw serve --port "+port) // TODO: this probably does not work for windows
 	go func() { log.Fatal(cmd.Run()) }()
 	time.Sleep(100 * time.Millisecond) // not pretty, but wait some time for process to start
-	return new(cmd, &http.Client{})
+	return new(cmd, &http.Client{}, "http://localhost:"+port)
 }
 
-func new(cmd *exec.Cmd, client client) *BitwardenServer {
-	return &BitwardenServer{cmd: cmd, client: client}
+func NewFromURL(url string) *BitwardenServer {
+	return new(nil, &http.Client{}, url)
+}
+
+func new(cmd *exec.Cmd, client client, url string) *BitwardenServer {
+	return &BitwardenServer{cmd: cmd, client: client, url: url}
 }
 
 func (b *BitwardenServer) Close() {
@@ -138,7 +143,7 @@ func (b *BitwardenServer) Close() {
 }
 
 func (b BitwardenServer) request(ctx context.Context, method string, endpoint string, req any, resp any) error {
-	url := "http://localhost:" + port + endpoint
+	url := b.url + endpoint
 	var body io.Reader = http.NoBody
 
 	if req != nil {

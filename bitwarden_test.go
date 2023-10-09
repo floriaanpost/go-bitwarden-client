@@ -15,7 +15,7 @@ import (
 
 func newTestBitwarden() (*BitwardenServer, *Mockclient) {
 	httpClient := &Mockclient{}
-	return new(nil, httpClient), httpClient
+	return new(nil, httpClient, "http://localhost"), httpClient
 }
 
 func checkRequest(method string, url string, body string) func(req *http.Request) bool {
@@ -27,12 +27,18 @@ func checkRequest(method string, url string, body string) func(req *http.Request
 	}
 }
 
+func TestNewFromURI(t *testing.T) {
+	url := "http://test:3429"
+	bw := NewFromURL(url)
+	assert.Equal(t, bw.url, url)
+}
+
 func TestUnlock(t *testing.T) {
 	t.Run("Should unlock if password is correct", func(t *testing.T) {
 		bw, client := newTestBitwarden()
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodPost, "http://localhost:"+port+"/unlock", `{"password":"password"}`))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodPost, "http://localhost/unlock", `{"password":"password"}`))).
 			Return(&http.Response{StatusCode: 200}, nil).
 			Once()
 
@@ -46,7 +52,7 @@ func TestUnlock(t *testing.T) {
 		bw, client := newTestBitwarden()
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodPost, "http://localhost:"+port+"/unlock", `{"password":"password"}`))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodPost, "http://localhost/unlock", `{"password":"password"}`))).
 			Return(&http.Response{StatusCode: 400}, nil).
 			Once()
 
@@ -62,7 +68,7 @@ func TestLock(t *testing.T) {
 		bw, client := newTestBitwarden()
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodPost, "http://localhost:"+port+"/lock", `{}`))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodPost, "http://localhost/lock", `{}`))).
 			Return(&http.Response{StatusCode: 200}, nil).
 			Once()
 
@@ -76,7 +82,7 @@ func TestLock(t *testing.T) {
 		bw, client := newTestBitwarden()
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodPost, "http://localhost:"+port+"/lock", `{}`))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodPost, "http://localhost/lock", `{}`))).
 			Return(&http.Response{StatusCode: 500}, nil).
 			Once()
 
@@ -106,7 +112,7 @@ func TestRequest(t *testing.T) {
 
 		testErr := errors.New("test error")
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/test", ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/test", ``))).
 			Return(&http.Response{StatusCode: 200, Body: nil}, testErr).
 			Once()
 
@@ -118,7 +124,7 @@ func TestRequest(t *testing.T) {
 		bw, client := newTestBitwarden()
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/test", ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/test", ``))).
 			Return(&http.Response{StatusCode: 404, Body: nil}, nil).
 			Once()
 
@@ -130,7 +136,7 @@ func TestRequest(t *testing.T) {
 		bw, client := newTestBitwarden()
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/test", ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/test", ``))).
 			Return(&http.Response{StatusCode: 500, Body: nil}, nil).
 			Once()
 
@@ -144,7 +150,7 @@ func TestRequest(t *testing.T) {
 		respData := []byte(`nonsense:asdf`)
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/test", ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/test", ``))).
 			Return(&http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewBuffer(respData))}, nil).
 			Once()
 
@@ -162,7 +168,7 @@ func TestGetItem(t *testing.T) {
 		respData := []byte(`{"data":{"passwordHistory":null,"revisionDate":"2023-05-06T07:08:09.0001Z","creationDate":"2023-01-01T01:02:03.0004Z","deletedDate":null,"object":"item","id":"` + itemID + `","organizationId":null,"folderId":null,"type":2,"reprompt":1,"name":"ENV","notes":"This is a secure note!","favorite":false,"secureNote":{"type":0},"collectionIds":[]}}`)
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/object/item/"+itemID, ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/object/item/"+itemID, ``))).
 			Return(&http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewBuffer(respData))}, nil).
 			Once()
 
@@ -184,7 +190,7 @@ func TestGetItem(t *testing.T) {
 		respData := []byte(`{"data":null}`)
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/object/item/"+itemID, ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/object/item/"+itemID, ``))).
 			Return(&http.Response{StatusCode: 404, Body: io.NopCloser(bytes.NewBuffer(respData))}, nil).
 			Once()
 
@@ -204,7 +210,7 @@ func TestGetLogin(t *testing.T) {
 		respData := []byte(`{"data":{"passwordHistory":null,"revisionDate":"2023-05-06T07:08:09.0001Z","creationDate":"2023-01-01T01:02:03.0004Z","deletedDate":null,"object":"item","id":"` + itemID + `","organizationId":null,"folderId":null,"type":2,"reprompt":1,"name":"Secret message","notes":"This is a secure note!","favorite":false,"secureNote":{"type":0},"collectionIds":[]}}`)
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/object/item/"+itemID, ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/object/item/"+itemID, ``))).
 			Return(&http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewBuffer(respData))}, nil).
 			Once()
 
@@ -221,7 +227,7 @@ func TestGetLogin(t *testing.T) {
 		respData := []byte(`{"data":{"passwordHistory":null,"revisionDate":"2021-07-05T16:55:35.966Z","creationDate":"2021-07-05T16:55:35.966Z","deletedDate":null,"object":"item","id":"` + itemID + `","organizationId":null,"folderId":null,"type":1,"reprompt":0,"name":"My secret","notes":null,"favorite":false,"login":null,"collectionIds":[]}}`)
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/object/item/"+itemID, ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/object/item/"+itemID, ``))).
 			Return(&http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewBuffer(respData))}, nil).
 			Once()
 
@@ -238,7 +244,7 @@ func TestGetLogin(t *testing.T) {
 		respData := []byte(`{"data":{"passwordHistory":null,"revisionDate":"2021-07-05T16:55:35.966Z","creationDate":"2021-07-05T16:55:35.966Z","deletedDate":null,"object":"item","id":"` + itemID + `","organizationId":null,"folderId":null,"type":1,"reprompt":0,"name":"My secret","notes":null,"favorite":false,"login":{"username":"user1","password":"password1","totp":null,"passwordRevisionDate":null},"collectionIds":[]}}`)
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/object/item/"+itemID, ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/object/item/"+itemID, ``))).
 			Return(&http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewBuffer(respData))}, nil).
 			Once()
 
@@ -259,7 +265,7 @@ func TestGetLogin(t *testing.T) {
 		respData := []byte(`{"data":null}`)
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/object/item/"+itemID, ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/object/item/"+itemID, ``))).
 			Return(&http.Response{StatusCode: 404, Body: io.NopCloser(bytes.NewBuffer(respData))}, nil).
 			Once()
 
@@ -278,7 +284,7 @@ func TestGetSecureNote(t *testing.T) {
 		respData := []byte(`{"data":{"passwordHistory":null,"revisionDate":"2021-07-05T16:55:35.966Z","creationDate":"2021-07-05T16:55:35.966Z","deletedDate":null,"object":"item","id":"` + itemID + `","organizationId":null,"folderId":null,"type":1,"reprompt":0,"name":"My secret","notes":null,"favorite":false,"login":{"username":"user1","password":null,"totp":null,"passwordRevisionDate":null},"collectionIds":[]}}`)
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/object/item/"+itemID, ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/object/item/"+itemID, ``))).
 			Return(&http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewBuffer(respData))}, nil).
 			Once()
 
@@ -295,7 +301,7 @@ func TestGetSecureNote(t *testing.T) {
 		respData := []byte(`{"data":{"passwordHistory":null,"revisionDate":"2023-05-06T07:08:09.0001Z","creationDate":"2023-01-01T01:02:03.0004Z","deletedDate":null,"object":"item","id":"` + itemID + `","organizationId":null,"folderId":null,"type":2,"reprompt":1,"name":"Secret message","notes":null,"favorite":false,"secureNote":{"type":0},"collectionIds":[]}}`)
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/object/item/"+itemID, ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/object/item/"+itemID, ``))).
 			Return(&http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewBuffer(respData))}, nil).
 			Once()
 
@@ -312,7 +318,7 @@ func TestGetSecureNote(t *testing.T) {
 		respData := []byte(`{"data":null}`)
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/object/item/"+itemID, ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/object/item/"+itemID, ``))).
 			Return(&http.Response{StatusCode: 404, Body: io.NopCloser(bytes.NewBuffer(respData))}, nil).
 			Once()
 
@@ -329,7 +335,7 @@ func TestGetSecureNote(t *testing.T) {
 		respData := []byte(`{"data":{"passwordHistory":null,"revisionDate":"2021-07-05T16:55:35.966Z","creationDate":"2021-07-05T16:55:35.966Z","deletedDate":null,"object":"item","id":"` + itemID + `","organizationId":null,"folderId":null,"type":2,"reprompt":0,"name":"My secret","notes":"This is very secret!","favorite":false,"login":{"username":"user1","password":"password1","totp":null,"passwordRevisionDate":null},"collectionIds":[]}}`)
 
 		client.
-			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost:"+port+"/object/item/"+itemID, ``))).
+			On("Do", mock.MatchedBy(checkRequest(http.MethodGet, "http://localhost/object/item/"+itemID, ``))).
 			Return(&http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewBuffer(respData))}, nil).
 			Once()
 
