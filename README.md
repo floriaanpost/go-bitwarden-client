@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/floriaanpost/bitwarden_test/bitwarden"
+	"github.com/floriaanpost/bitwarden"
 	"golang.org/x/term"
 )
 
