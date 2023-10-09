@@ -18,6 +18,7 @@ import (
 
 type ItemType int
 type Reprompt int
+type FieldType int
 
 const (
 	port = "4628"
@@ -46,17 +47,18 @@ var (
 )
 
 type Field struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-	Type  int    `json:"type"` // TODO: don't know what this is
+	Name  string    `json:"name"`
+	Value string    `json:"value"`
+	Type  FieldType `json:"type"` // TODO: don't know what this is
 }
 
 type URI struct {
-	URI string
+	Match *string
+	URI   *string
 }
 
 type Login struct {
-	URIs     any     `json:"uris"` // FIXME
+	URIs     []URI   `json:"uris"`
 	Username *string `json:"username"`
 	Password *string `json:"password"`
 	TOTP     *string `json:"totp"`

@@ -33,7 +33,8 @@ func main() {
 	fmt.Printf("Enter your master password: ")
 	masterPassword, err := term.ReadPassword(0)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 	fmt.Println()
 
@@ -53,3 +54,6 @@ func main() {
 	fmt.Println(note)
 }
 ```
+
+# To do
+- [ ] Support windows when using `New()`. It does support `NewFromURL()`
