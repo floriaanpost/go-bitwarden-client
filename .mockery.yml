@@ -1,0 +1,10 @@
+with-expecter: true
+dir: "{{.InterfaceDir}}"
+filename: "{{.InterfaceName}}_mock_test.go"
+mockname: "Mock{{.InterfaceName}}"
+inpackage: true
+
+packages:
+  github.com/floriaanpost/bitwarden:
+    interfaces:
+      client:
