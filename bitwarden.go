@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os/exec"
+	"runtime"
 	"time"
 )
 
@@ -122,7 +123,16 @@ type client interface {
 }
 
 func New() *BitwardenServer {
-	cmd := exec.Command("bash", "-c", "bw serve --port "+port) // TODO: this probably does not work for windows
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("cmd", "/C", "bw serve --port "+port)
+	case "darwin", "linux":
+		cmd = exec.Command("bash", "-c", "bw serve --port "+port)
+	default:
+		panic(fmt.Sprintf("Unsuppored os: %s", runtime.GOOS))
+	}
+
 	go func() { cmd.Run() }()
 	time.Sleep(100 * time.Millisecond) // not pretty, but wait some time for process to start
 	return new(cmd, &http.Client{}, "http://localhost:"+port)

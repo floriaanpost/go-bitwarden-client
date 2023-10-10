@@ -17,8 +17,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"syscall"
 
-	"github.com/floriaanpost/bitwarden"
+	"github.com/floriaanpost/go-bitwarden-client"
 	"golang.org/x/term"
 )
 
@@ -31,10 +32,9 @@ func main() {
 
 	// get your master password from the command line
 	fmt.Printf("Enter your master password: ")
-	masterPassword, err := term.ReadPassword(0)
+	masterPassword, err := term.ReadPassword(syscall.Stdin)
 	if err != nil {
-		log.Println(err)
-		return
+		return "", err
 	}
 	fmt.Println()
 
@@ -56,5 +56,4 @@ func main() {
 ```
 
 # To do
-- [ ] Support windows when using `New()`. It does support `NewFromURL()`
 - [ ] Improve go docs
