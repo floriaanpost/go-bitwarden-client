@@ -1,4 +1,4 @@
-module github.com/floriaanpost/bitwarden
+module github.com/floriaanpost/go-bitwarden-client
 
 go 1.21.2
 
